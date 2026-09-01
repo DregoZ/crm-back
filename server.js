@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(helmet());
 
 // ── CONFIGURACIÓN DE PROXY ────────────────────────────────
-//app.set('trust proxy', 1);
+app.set('trust proxy', 1);
 
 // ── CORS ────────────────────────────────────────────────────
 const allowedOrigins = [
@@ -29,7 +29,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Permitir cualquier subdominio de vercel.app (previews de PR incluidos)
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    //if (origin.endsWith('.vercel.app')) return callback(null, true);
 
     // Permitir orígenes explícitamente en lista blanca
     if (allowedOrigins.includes(origin)) return callback(null, true);
