@@ -29,7 +29,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Permitir cualquier subdominio de vercel.app (previews de PR incluidos)
-    //if (origin.endsWith('.vercel.app')) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
 
     // Permitir orígenes explícitamente en lista blanca
     if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -42,7 +42,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // <--- Manejo explícito de Preflight
+app.options(/(.*)/, cors(corsOptions)); // <--- Manejo explícito de Preflight
 
 // Rate limiting específico para el login
 const loginLimiter = rateLimit({
