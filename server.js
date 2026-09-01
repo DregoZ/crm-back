@@ -36,7 +36,7 @@ const corsOptions = {
 
     return callback(new Error(`Origin no permitido por CORS: ${origin}`));
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // <--- Agregado OPTIONS
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], // <--- Agregado OPTIONS
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
