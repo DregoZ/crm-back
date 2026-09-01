@@ -12,21 +12,25 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(helmet());
 
-// ── CORS restringido al dominio de producción de Vercel ────
+// ── CORS ────────────────────────────────────────────────────
 const allowedOrigins = [
-  process.env.FRONTEND_URL, 
+  process.env.FRONTEND_URL,
   process.env.FRONTEND_URL_PREVIEW,
-  'http://localhost:4200', // Desarrollo local Angular
+  'http://localhost:4200',
+  'http://localhost:3000',
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin && process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    // Peticiones sin origin (Postman, curl, server-to-server) — permitir siempre
+    if (!origin) return callback(null, true);
+
+    // Permitir cualquier subdominio de vercel.app (previews de PR incluidos)
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+
+    // Permitir origenes explícitamente en lista blanca
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
     return callback(new Error(`Origin no permitido por CORS: ${origin}`));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
