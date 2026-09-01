@@ -12,46 +12,54 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(helmet());
 
-// ── CONFIGURACIÓN DE PROXY ────────────────────────────────
+// 1. Confía en el proxy de Render
 app.set('trust proxy', 1);
 
-// ── CORS ────────────────────────────────────────────────────
+// 2. Definición de orígenes permitidos (limpiando barras al final)
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.FRONTEND_URL_PREVIEW,
+  process.env.FRONTEND_URL?.replace(/\/$/, ''),
+  process.env.FRONTEND_URL_PREVIEW?.replace(/\/$/, ''),
   'http://localhost:4200',
   'http://localhost:3000',
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Peticiones sin origin (Postman, curl, server-to-server) — permitir siempre
+    // Peticiones sin origin (Postman, curl, etc.)
     if (!origin) return callback(null, true);
 
-    // Permitir cualquier subdominio de vercel.app (previews de PR incluidos)
+    // Permitir cualquier subdominio de vercel.app (ej: mi-app.vercel.app, mi-app-git.vercel.app)
     if (origin.endsWith('.vercel.app')) return callback(null, true);
 
-    // Permitir orígenes explícitamente en lista blanca
+    // Comprobar la lista explícita
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
-    return callback(new Error(`Origin no permitido por CORS: ${origin}`));
+    // En lugar de lanzar un Error(), pasa false para que devuelva una respuesta CORS válida sin tumbar la ejecución
+    return callback(null, false);
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], // <--- Agregado OPTIONS
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
+  optionsSuccessStatus: 204 // Estado HTTP estándar para respuestas OPTIONS exitosas
 };
 
+// 3. Aplica CORS globalmente PRIMERO
 app.use(cors(corsOptions));
-app.options(/(.*)/, cors(corsOptions)); // <--- Manejo explícito de Preflight
 
-// Rate limiting específico para el login
+// 4. Maneja de forma explícita TODAS las peticiones preliminares (OPTIONS) usando regex
+app.options(/(.*)/, cors(corsOptions));
+
+// 5. Rate Limit (Después de CORS y OPTIONS)
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // 5 intentos por IP
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: { error: 'Demasiados intentos. Inténtalo de nuevo en 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
+  // Ignora las peticiones OPTIONS para que no cuenten dentro del límite de 5 intentos
+  skip: (req) => req.method === 'OPTIONS'
 });
+
 app.use('/api/auth/login', loginLimiter);
 
 // ── Conexión a MongoDB Atlas ────────────────────────────────
