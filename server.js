@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(helmet());
 
 // ── CONFIGURACIÓN DE PROXY ────────────────────────────────
-app.set('trust proxy', 1);
+//app.set('trust proxy', 1);
 
 // ── CORS ────────────────────────────────────────────────────
 const allowedOrigins = [
