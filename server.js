@@ -50,7 +50,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 4. ELIMINA la línea de app.options(/(.*)/...) y reemplázala por esta que intercepta todo al inicio:
-app.options('*', cors(corsOptions)); 
+app.options(/(.*)/, cors(corsOptions)); 
 
 // 5. Rate Limit adaptado: Aplícalo como un middleware intermedio SOLO para el método POST de login
 const loginLimiter = rateLimit({
