@@ -15,7 +15,8 @@ app.use(helmet());
 // ── CORS restringido al dominio de producción de Vercel ────
 const allowedOrigins = [
   process.env.FRONTEND_URL, 
-  process.env.FRONTEND_URL_PREVIEW, 
+  process.env.FRONTEND_URL_PREVIEW,
+  'http://localhost:4200', // Desarrollo local Angular
 ].filter(Boolean);
 
 const corsOptions = {

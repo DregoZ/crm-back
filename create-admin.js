@@ -11,7 +11,7 @@ async function createAdmin() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ Conectado a MongoDB Atlas');
 
-    const email = 'admin'; // Cambia esto por tu email real
+    const email = 'admin@admin'; // Cambia esto por tu email real
     const password = '123456';    // Cambia esto por tu contraseña segura
 
     // Comprobar si ya existe

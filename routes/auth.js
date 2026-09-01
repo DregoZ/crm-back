@@ -5,7 +5,8 @@ const Usuario = require('../models/Usuario');
 
 router.post(
   '/login',
-  [body('email').isEmail(), body('password').isLength({ min: 6 })],
+  //  [body('email').isEmail(), body('password').isLength({ min: 6 })], //valida email y contraseña
+  [body('email').notEmpty(), body('password').isLength({ min: 6 })], //valida que no esten vacios
   async (req, res) => {
     const errores = validationResult(req);
     if (!errores.isEmpty()) return res.status(400).json({ errores: errores.array() });
