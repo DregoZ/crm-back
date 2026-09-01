@@ -15,52 +15,56 @@ app.use(helmet());
 // 1. Confía en el proxy de Render
 app.set('trust proxy', 1);
 
-// 2. Definición de orígenes permitidos (limpiando barras al final)
+// 2. Definición de orígenes permitidos (Limpieza estricta de espacios y barras finales)
 const allowedOrigins = [
-  process.env.FRONTEND_URL?.replace(/\/$/, ''),
-  process.env.FRONTEND_URL_PREVIEW?.replace(/\/$/, ''),
+  process.env.FRONTEND_URL?.trim().replace(/\/$/, ''),
+  process.env.FRONTEND_URL_PREVIEW?.trim().replace(/\/$/, ''),
   'http://localhost:4200',
   'http://localhost:3000',
 ].filter(Boolean);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Peticiones sin origin (Postman, curl, etc.)
+    // Peticiones sin origin (Postman, curl, servidores, etc.)
     if (!origin) return callback(null, true);
 
-    // Permitir cualquier subdominio de vercel.app (ej: mi-app.vercel.app, mi-app-git.vercel.app)
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    // Limpiar el origen entrante por si acaso trae barras finales (raro, pero pasa)
+    const cleanOrigin = origin.replace(/\/$/, '');
+
+    // Permitir cualquier subdominio de vercel.app
+    if (cleanOrigin.endsWith('.vercel.app')) return callback(null, true);
 
     // Comprobar la lista explícita
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(cleanOrigin)) return callback(null, true);
 
-    // En lugar de lanzar un Error(), pasa false para que devuelva una respuesta CORS válida sin tumbar la ejecución
-    return callback(null, false);
+    // IMPORTANTE: Lanza un error real para que lo capture tu manejador de errores global abajo
+    return callback(new Error('Origin no permitido por CORS'), false);
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  optionsSuccessStatus: 204 // Estado HTTP estándar para respuestas OPTIONS exitosas
+  optionsSuccessStatus: 204
 };
 
-// 3. Aplica CORS globalmente PRIMERO
+// 3. Aplica CORS globalmente (Esto ya maneja las peticiones OPTIONS automáticamente de forma interna)
 app.use(cors(corsOptions));
 
-// 4. Maneja de forma explícita TODAS las peticiones preliminares (OPTIONS) usando regex
-app.options(/(.*)/, cors(corsOptions));
+// 4. ELIMINA la línea de app.options(/(.*)/...) y reemplázala por esta que intercepta todo al inicio:
+app.options('*', cors(corsOptions)); 
 
-// 5. Rate Limit (Después de CORS y OPTIONS)
+// 5. Rate Limit adaptado: Aplícalo como un middleware intermedio SOLO para el método POST de login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: { error: 'Demasiados intentos. Inténtalo de nuevo en 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
-  // Ignora las peticiones OPTIONS para que no cuenten dentro del límite de 5 intentos
-  skip: (req) => req.method === 'OPTIONS'
+  // Ya no necesitas el 'skip' aquí porque solo se lo aplicaremos a las peticiones POST reales
 });
 
-app.use('/api/auth/login', loginLimiter);
+// En lugar de usar app.use() global para la ruta, deja que el router de auth lo maneje, 
+// o si prefieres dejarlo aquí, asegúrate de que solo afecte al POST:
+app.post('/api/auth/login', loginLimiter);
 
 // ── Conexión a MongoDB Atlas ────────────────────────────────
 mongoose
