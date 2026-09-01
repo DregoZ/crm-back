@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(helmet());
 
+// ── CONFIGURACIÓN DE PROXY ────────────────────────────────
+app.set('trust proxy', 1);
+
 // ── CORS ────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -28,16 +31,18 @@ const corsOptions = {
     // Permitir cualquier subdominio de vercel.app (previews de PR incluidos)
     if (origin.endsWith('.vercel.app')) return callback(null, true);
 
-    // Permitir origenes explícitamente en lista blanca
+    // Permitir orígenes explícitamente en lista blanca
     if (allowedOrigins.includes(origin)) return callback(null, true);
 
     return callback(new Error(`Origin no permitido por CORS: ${origin}`));
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // <--- Agregado OPTIONS
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
+
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // <--- Manejo explícito de Preflight
 
 // Rate limiting específico para el login
 const loginLimiter = rateLimit({
