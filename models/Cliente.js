@@ -8,4 +8,4 @@ const clienteSchema = new mongoose.Schema({
   fecha_registro: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Cliente', clienteSchema);
+module.exports = mongoose.model('Cliente', clienteSchema, 'cliente');
