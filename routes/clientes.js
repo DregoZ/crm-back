@@ -25,12 +25,23 @@ router.get("/", async (req, res) => {
       : "fecha_registro";
     const order = req.query.order === "asc" ? 1 : -1;
 
+    const filtro = { activo: true };
+
+    const search = (req.query.search || "").trim();
+    if (search) {
+      const regex = new RegExp(
+        search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      );
+      filtro.$or = [{ nombre: regex }, { telefono: regex }, { email: regex }];
+    }
+
     const [clientes, total] = await Promise.all([
-      Cliente.find({ activo: true })
+      Cliente.find(filtro)
         .sort({ [sortBy]: order })
         .skip(skip)
         .limit(limit),
-      Cliente.countDocuments({ activo: true }),
+      Cliente.countDocuments(filtro),
     ]);
 
     res.json({
