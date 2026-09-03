@@ -18,15 +18,17 @@ router.get("/", async (req, res) => {
       "telefono",
       "email",
       "fecha_registro",
-      "createdAt",
+      "activo",
+      "proximoEventoEstado",
+      "proximoEventoFecha",
     ];
+
     const sortBy = camposOrdenables.includes(req.query.sortBy)
       ? req.query.sortBy
       : "fecha_registro";
     const order = req.query.order === "asc" ? 1 : -1;
 
-    const filtro = { activo: true };
-
+    const filtro = {};
     const search = (req.query.search || "").trim();
     if (search) {
       const regex = new RegExp(
@@ -36,11 +38,77 @@ router.get("/", async (req, res) => {
       filtro.$or = [{ nombre: regex }, { telefono: regex }, { email: regex }];
     }
 
+    const pipeline = [
+      { $match: filtro },
+
+      // 1. Obtener el próximo evento
+      {
+        $lookup: {
+          from: "eventos",
+          let: { clienteId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$id_cliente", "$$clienteId"] },
+                fecha_evento: { $gte: new Date() },
+              },
+            },
+            { $sort: { fecha_evento: 1 } },
+            { $limit: 1 },
+            { $project: { fecha_evento: 1, estado: 1, _id: 0 } },
+          ],
+          as: "proximoEventoArr",
+        },
+      },
+
+      // 2. Conteo total de eventos
+      {
+        $lookup: {
+          from: "eventos",
+          let: { clienteId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$id_cliente", "$$clienteId"] } } },
+            { $count: "total" },
+          ],
+          as: "totalEventosArr",
+        },
+      },
+
+      // 3. Formatear datos: creamos el objeto 'proximoEvento' Y los campos de ordenación
+      {
+        $addFields: {
+          proximoEvento: { $arrayElemAt: ["$proximoEventoArr", 0] },
+          totalEventos: {
+            $ifNull: [{ $arrayElemAt: ["$totalEventosArr.total", 0] }, 0],
+          },
+        },
+      },
+      {
+        $addFields: {
+          // Campos planos que usa Mongo únicamente para ejecutar el $sort dinámico
+          proximoEventoFecha: "$proximoEvento.fecha_evento",
+          proximoEventoEstado: "$proximoEvento.estado",
+        },
+      },
+
+      // 4. Ordenar correctamente después de calcular los campos
+      { $sort: { [sortBy]: order } },
+
+      // 5. Paginación
+      { $skip: skip },
+      { $limit: limit },
+
+      // 6. Eliminar solo los arrays auxiliares temporales
+      {
+        $project: {
+          proximoEventoArr: 0,
+          totalEventosArr: 0,
+        },
+      },
+    ];
+
     const [clientes, total] = await Promise.all([
-      Cliente.find(filtro)
-        .sort({ [sortBy]: order })
-        .skip(skip)
-        .limit(limit),
+      Cliente.aggregate(pipeline),
       Cliente.countDocuments(filtro),
     ]);
 
