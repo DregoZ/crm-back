@@ -123,6 +123,64 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Obtener cliente por ID
+router.get("/:id", async (req, res) => {
+  try {
+    const cliente = await Cliente.findById(req.params.id);
+    if (!cliente)
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    res.json(cliente);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener el cliente" });
+  }
+});
+
+// Crear cliente
+router.post("/", async (req, res) => {
+  try {
+    const { nombre, telefono, email, notas_gustos, activo } = req.body;
+    const cliente = await Cliente.create({
+      nombre,
+      telefono,
+      email,
+      notas_gustos,
+      activo: activo !== undefined ? activo : true,
+    });
+    res.status(201).json(cliente);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Actualizar cliente
+router.put("/:id", async (req, res) => {
+  try {
+    const { nombre, telefono, email, notas_gustos, activo } = req.body;
+    const cliente = await Cliente.findByIdAndUpdate(
+      req.params.id,
+      { nombre, telefono, email, notas_gustos, activo },
+      { new: true, runValidators: true },
+    );
+    if (!cliente)
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    res.json(cliente);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Eliminar cliente
+router.delete("/:id", async (req, res) => {
+  try {
+    const cliente = await Cliente.findByIdAndDelete(req.params.id);
+    if (!cliente)
+      return res.status(404).json({ error: "Cliente no encontrado" });
+    res.json({ message: "Cliente eliminado correctamente" });
+  } catch (err) {
+    res.status(500).json({ error: "Error al eliminar el cliente" });
+  }
+});
+
 // Creación conjunta con transacción
 router.post("/con-evento", async (req, res) => {
   const session = await mongoose.startSession();
