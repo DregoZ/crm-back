@@ -181,7 +181,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// Creación conjunta con transacción
+/* // Creación conjunta con transacción
 router.post("/con-evento", async (req, res) => {
   const session = await mongoose.startSession();
   try {
@@ -202,5 +202,5 @@ router.post("/con-evento", async (req, res) => {
     session.endSession();
   }
 });
-
+ */
 module.exports = router;
