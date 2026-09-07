@@ -96,6 +96,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/eventos", require("./routes/eventos"));
 app.use("/api/clientes", require("./routes/clientes"));
+app.use("/api/barras", require("./routes/barras"));
 app.use("/api/material", require("./routes/material"));
 app.use("/api/contabilidad", require("./routes/contabilidad"));
 

@@ -42,7 +42,7 @@ router.get("/:id", async (req, res) => {
   try {
     const evento = await Evento.findOne({ _id: req.params.id })
       .populate("id_cliente", "nombre telefono email")
-      .populate("id_tipo_barra", "nombre_barra precio_base_persona")
+      .populate("id_tipo_barra", "descripcion precio_persona")
       .lean();
 
     if (!evento) {

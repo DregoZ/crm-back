@@ -4,6 +4,7 @@ const tipoBarraEmbeddedSchema = new mongoose.Schema(
   {
     _id: { type: mongoose.Schema.Types.ObjectId, required: true },
     nombre_barra: { type: String, required: true },
+    precio_persona: { type: Number, required: true },
   },
   { _id: false }, // Evita que Mongoose genere un nuevo ObjectId extra automáticamente
 );
