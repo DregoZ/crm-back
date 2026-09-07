@@ -37,6 +37,28 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Obtener un evento por su ID
+router.get("/:id", async (req, res) => {
+  try {
+    const evento = await Evento.findOne({ _id: req.params.id })
+      .populate("id_cliente", "nombre telefono email")
+      .populate("id_tipo_barra", "nombre_barra precio_base_persona")
+      .lean();
+
+    if (!evento) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    res.json(evento);
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ error: "ID de evento no válido" });
+    }
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener el evento" });
+  }
+});
+
 // POST /api/eventos – crear nuevo evento
 router.post("/", async (req, res) => {
   try {

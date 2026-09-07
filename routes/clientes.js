@@ -55,7 +55,7 @@ router.get("/", async (req, res) => {
             },
             { $sort: { fecha_evento: 1 } },
             { $limit: 1 },
-            { $project: { fecha_evento: 1, estado: 1, _id: 0 } },
+            { $project: { fecha_evento: 1, estado: 1, _id: 1 } },
           ],
           as: "proximoEventoArr",
         },
