@@ -25,7 +25,7 @@ const eventoSchema = new mongoose.Schema({
     required: true,
   },
   logistica_notas: { type: String },
-  precio_final_calculado: { type: Number, required: true },
+  precio_final: { type: Number, required: true },
 });
 
 module.exports = mongoose.model("Evento", eventoSchema);

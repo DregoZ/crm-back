@@ -70,4 +70,43 @@ router.post("/", async (req, res) => {
   }
 });
 
+// PUT /api/eventos/:id – actualizar evento
+router.put("/:id", async (req, res) => {
+  try {
+    const evento = await Evento.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!evento) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    res.json(evento);
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ error: "ID de evento no válido" });
+    }
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE /api/eventos/:id – eliminar evento
+router.delete("/:id", async (req, res) => {
+  try {
+    const evento = await Evento.findByIdAndDelete(req.params.id);
+
+    if (!evento) {
+      return res.status(404).json({ error: "Evento no encontrado" });
+    }
+
+    res.json({ message: "Evento eliminado correctamente" });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ error: "ID de evento no válido" });
+    }
+    res.status(500).json({ error: "Error al eliminar el evento" });
+  }
+});
+
 module.exports = router;
