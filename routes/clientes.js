@@ -138,10 +138,11 @@ router.get("/:id", async (req, res) => {
 // Crear cliente
 router.post("/", async (req, res) => {
   try {
-    const { nombre, telefono, email, notas_gustos, activo } = req.body;
+    const { nombre, telefono, dni, email, notas_gustos, activo } = req.body;
     const cliente = await Cliente.create({
       nombre,
       telefono,
+      dni,
       email,
       notas_gustos,
       activo: activo !== undefined ? activo : true,
@@ -155,10 +156,10 @@ router.post("/", async (req, res) => {
 // Actualizar cliente
 router.put("/:id", async (req, res) => {
   try {
-    const { nombre, telefono, email, notas_gustos, activo } = req.body;
+    const { nombre, telefono, dni, email, notas_gustos, activo } = req.body;
     const cliente = await Cliente.findByIdAndUpdate(
       req.params.id,
-      { nombre, telefono, email, notas_gustos, activo },
+      { nombre, telefono, dni, email, notas_gustos, activo },
       { returnDocument: "after", runValidators: true },
     );
     if (!cliente)
