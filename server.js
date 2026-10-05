@@ -8,14 +8,14 @@ const rateLimit = require("express-rate-limit");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Middleware base ────────────────────────────────────────
+// ── Middleware base ──────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(helmet());
 
 // 1. Confía en el proxy de Render
 app.set("trust proxy", 1);
 
-// ── CORS ───────────────────────────────────────────────────
+// ── CORS ─────────────────────────────────────────────────────────────────────
 // 2. Definición de orígenes permitidos (Limpieza estricta de espacios y barras finales)
 const allowedOrigins = [
   process.env.FRONTEND_URL?.trim().replace(/\/$/, ""),
@@ -64,14 +64,11 @@ const loginLimiter = rateLimit({
   message: { error: "Demasiados intentos. Inténtalo de nuevo en 15 minutos." },
   standardHeaders: true,
   legacyHeaders: false,
-  // Ya no necesitas el 'skip' aquí porque solo se lo aplicaremos a las peticiones POST reales
 });
 
-// En lugar de usar app.use() global para la ruta, deja que el router de auth lo maneje,
-// o si prefieres dejarlo aquí, asegúrate de que solo afecte al POST:
 app.post("/api/auth/login", loginLimiter);
 
-// ── Conexión a MongoDB Atlas ────────────────────────────────
+// ── Conexión a MongoDB Atlas ────────────────────────────────────────────────
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Atlas conectado"))
@@ -80,7 +77,7 @@ mongoose
     process.exit(1);
   });
 
-// ── Rutas ────────────────────────────────────────────────────
+// ── Rutas ────────────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "crm-cocteleria-backend" });
 });
@@ -97,10 +94,11 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/eventos", require("./routes/eventos"));
 app.use("/api/clientes", require("./routes/clientes"));
 app.use("/api/barras", require("./routes/barras"));
+app.use("/api/cocteles", require("./routes/cocteles"));
 app.use("/api/material", require("./routes/material"));
 app.use("/api/contabilidad", require("./routes/contabilidad"));
 
-// ── Manejador global de errores CORS y otros ─────────────────
+// ── Manejador global de errores CORS y otros ──────────────────────────────────
 app.use((err, req, res, next) => {
   if (err.message?.startsWith("Origin no permitido")) {
     return res.status(403).json({ error: err.message });

@@ -12,12 +12,18 @@ router.get("/", async (req, res) => {
     const skip = (page - 1) * limit;
 
     const sortBy = req.query.sortBy || "nombre_barra";
-    const order = req.query.order === "asc" ? 1 : -1;
+    const order = req.query.order === "desc" ? -1 : 1;
 
-    const filtro = {}; // Sin filtro, devolver todos las barras
+    const filtro = {};
+    const search = (req.query.search || "").trim();
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      filtro.$or = [{ nombre_barra: regex }, { descripcion: regex }];
+    }
 
     const [barras, total] = await Promise.all([
       Barras.find(filtro)
+        .populate("lista_cocteles", "nombre tipo_vaso")
         .sort({ [sortBy]: order })
         .skip(skip)
         .limit(limit)
@@ -33,15 +39,17 @@ router.get("/", async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error al obtener barras:", error);
     res.status(500).json({ error: "Error al obtener barras" });
   }
 });
 
-// Obtener un barra por su ID
+// GET /api/barras/:id – obtener una barra por ID
 router.get("/:id", async (req, res) => {
   try {
-    const barra = await Barras.findOne({ _id: req.params.id }).lean();
+    const barra = await Barras.findById(req.params.id)
+      .populate("lista_cocteles", "nombre tipo_vaso")
+      .lean();
 
     if (!barra) {
       return res.status(404).json({ error: "Barra no encontrada" });
@@ -52,7 +60,7 @@ router.get("/:id", async (req, res) => {
     if (error.name === "CastError") {
       return res.status(400).json({ error: "ID de barra no válido" });
     }
-    console.error(error);
+    console.error("Error al obtener la barra:", error);
     res.status(500).json({ error: "Error al obtener la barra" });
   }
 });
@@ -65,6 +73,45 @@ router.post("/", async (req, res) => {
     res.status(201).json(barra);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/barras/:id – actualizar barra
+router.put("/:id", async (req, res) => {
+  try {
+    const barra = await Barras.findByIdAndUpdate(req.params.id, req.body, {
+      returnDocument: "after",
+      runValidators: true,
+    })
+      .populate("lista_cocteles", "nombre tipo_vaso")
+      .lean();
+
+    if (!barra) {
+      return res.status(404).json({ error: "Barra no encontrada" });
+    }
+
+    res.json(barra);
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ error: "ID de barra no válido" });
+    }
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE /api/barras/:id – eliminar barra
+router.delete("/:id", async (req, res) => {
+  try {
+    const barra = await Barras.findByIdAndDelete(req.params.id);
+    if (!barra) {
+      return res.status(404).json({ error: "Barra no encontrada" });
+    }
+    res.json({ message: "Tipo de barra eliminado correctamente" });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({ error: "ID de barra no válido" });
+    }
+    res.status(500).json({ error: "Error al eliminar la barra" });
   }
 });
 

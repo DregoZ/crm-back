@@ -159,7 +159,7 @@ router.put("/:id", async (req, res) => {
     const cliente = await Cliente.findByIdAndUpdate(
       req.params.id,
       { nombre, telefono, email, notas_gustos, activo },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     );
     if (!cliente)
       return res.status(404).json({ error: "Cliente no encontrado" });
