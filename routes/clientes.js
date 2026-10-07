@@ -6,7 +6,9 @@ const { verificarToken } = require("../middleware/auth");
 
 router.use(verificarToken);
 
-// Obtener listado paginado
+/**
+ * Obtener listado paginado. Este listado es más complejo al incluír los eventos próximos.
+ */
 router.get("/", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
